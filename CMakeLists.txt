@@ -46,6 +46,10 @@ if(WIN32)
 		PRIVATE
 			"${LIBSDL2main}")
 else()
+	target_include_directories("${CMAKE_PROJECT_NAME}"
+        PRIVATE
+            /usr/include/SDL2)
+
 	find_library(LIBSDL2 SDL2)
 	find_library(LIBSDL2_image SDL2_image)
 	find_library(LIBSDL2_ttf SDL2_ttf)
