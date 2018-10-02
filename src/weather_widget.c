@@ -165,10 +165,14 @@ static int update_weather(
         double celsius;
         int symbol;
         int hour;
+        bool is_daytime;
 
         sscanf(strtok(weather, "\r\n"), "%*d-%*d-%*dT%d:00:00Z,%lf,%d", &hour, &celsius, &symbol);
 
         hour += tz_offset_second() / 3600;
+
+        // TODO: determine this based on sunset/sundown times
+        is_daytime = hour < 7 || hour > 21;
 
         int w, h;
         SDL_Surface *surface_celsius, *surface_symbol;
@@ -178,35 +182,68 @@ static int update_weather(
         TTF_SizeUTF8(fontXL, buf, &w, &h);
         render_instr_set_swh(&widget->render_instrs[0].celsius, surface_celsius, w, h);
 
-        switch (symbol) {
-            case 1:  surface_symbol = IMG_Load("assets/fmi/white/1-128.png");  break; // selkeää
-            case 2:  surface_symbol = IMG_Load("assets/fmi/white/2-128.png");  break; // puolipilvistä
-            case 21: surface_symbol = IMG_Load("assets/fmi/white/21-128.png"); break; // heikkoja sadekuuroja
-            case 22: surface_symbol = IMG_Load("assets/fmi/white/24-128.png"); break; // sadekuuroja
-            case 23: surface_symbol = IMG_Load("assets/fmi/white/27-128.png"); break; // voimakkaita sadekuuroja
-            case 3:  surface_symbol = IMG_Load("assets/fmi/white/7-128.png");  break; // pilvistä
-            case 31: surface_symbol = IMG_Load("assets/fmi/white/31-128.png"); break; // heikkoa vesisadetta
-            case 32: surface_symbol = IMG_Load("assets/fmi/white/32-128.png"); break; // vesisadetta
-            case 33: surface_symbol = IMG_Load("assets/fmi/white/33-128.png"); break; // voimakasta vesisadetta
-            case 41: surface_symbol = IMG_Load("assets/fmi/white/41-128.png"); break; // heikkoja lumikuuroja
-            case 42: surface_symbol = IMG_Load("assets/fmi/white/42-128.png"); break; // lumikuuroja
-            case 43: surface_symbol = IMG_Load("assets/fmi/white/43-128.png"); break; // voimakkaita lumikuuroja
-            case 51: surface_symbol = IMG_Load("assets/fmi/white/51-128.png"); break; // heikkoa lumisadetta
-            case 52: surface_symbol = IMG_Load("assets/fmi/white/52-128.png"); break; // lumisadetta
-            case 53: surface_symbol = IMG_Load("assets/fmi/white/53-128.png"); break; // voimakasta lumisadetta
-            case 61: surface_symbol = IMG_Load("assets/fmi/white/71-128.png"); break; // ukkoskuuroja
-            case 62: surface_symbol = IMG_Load("assets/fmi/white/74-128.png"); break; // voimakkaita ukkoskuuroja
-            case 63: surface_symbol = IMG_Load("assets/fmi/white/77-128.png"); break; // ukkosta
-            case 64: surface_symbol = IMG_Load("assets/fmi/white/67-128.png"); break; // voimakasta ukkosta
-            case 71: surface_symbol = IMG_Load("assets/fmi/white/71-128.png"); break; // heikkoja räntäkuuroja
-            case 72: surface_symbol = IMG_Load("assets/fmi/white/74-128.png"); break; // räntäkuuroja
-            case 73: surface_symbol = IMG_Load("assets/fmi/white/77-128.png"); break; // voimakkaita räntäkuuroja
-            case 81: surface_symbol = IMG_Load("assets/fmi/white/1-128.png");  break; // heikkoa räntäsadetta
-            case 82: surface_symbol = IMG_Load("assets/fmi/white/1-128.png");  break; // räntäsadetta
-            case 83: surface_symbol = IMG_Load("assets/fmi/white/1-128.png");  break; // voimakasta räntäsadetta
-            case 91: surface_symbol = IMG_Load("assets/fmi/white/1-128.png");  break; // utua
-            case 92: surface_symbol = IMG_Load("assets/fmi/white/1-128.png");  break; // sumua
-        }
+        if (is_daytime)
+            switch (symbol) 
+            {
+                case 1:  surface_symbol = IMG_Load("assets/fmi/white/1-128.png");  break; // selkeää
+                case 2:  surface_symbol = IMG_Load("assets/fmi/white/4-128.png");  break; // puolipilvistä
+                case 21: surface_symbol = IMG_Load("assets/fmi/white/21-128.png"); break; // heikkoja sadekuuroja
+                case 22: surface_symbol = IMG_Load("assets/fmi/white/24-128.png"); break; // sadekuuroja
+                case 23: surface_symbol = IMG_Load("assets/fmi/white/27-128.png"); break; // voimakkaita sadekuuroja
+                case 3:  surface_symbol = IMG_Load("assets/fmi/white/7-128.png");  break; // pilvistä
+                case 31: surface_symbol = IMG_Load("assets/fmi/white/37-128.png"); break; // heikkoa vesisadetta
+                case 32: surface_symbol = IMG_Load("assets/fmi/white/38-128.png"); break; // vesisadetta
+                case 33: surface_symbol = IMG_Load("assets/fmi/white/39-128.png"); break; // voimakasta vesisadetta
+                case 41: surface_symbol = IMG_Load("assets/fmi/white/54-128.png"); break; // heikkoja lumikuuroja
+                case 42: surface_symbol = IMG_Load("assets/fmi/white/55-128.png"); break; // lumikuuroja
+                case 43: surface_symbol = IMG_Load("assets/fmi/white/56-128.png"); break; // voimakkaita lumikuuroja
+                case 51: surface_symbol = IMG_Load("assets/fmi/white/57-128.png"); break; // heikkoa lumisadetta
+                case 52: surface_symbol = IMG_Load("assets/fmi/white/58-128.png"); break; // lumisadetta
+                case 53: surface_symbol = IMG_Load("assets/fmi/white/59-128.png"); break; // voimakasta lumisadetta
+                case 61: surface_symbol = IMG_Load("assets/fmi/white/71-128.png"); break; // ukkoskuuroja
+                case 62: surface_symbol = IMG_Load("assets/fmi/white/74-128.png"); break; // voimakkaita ukkoskuuroja
+                case 63: surface_symbol = IMG_Load("assets/fmi/white/77-128.png"); break; // ukkosta
+                case 64: surface_symbol = IMG_Load("assets/fmi/white/67-128.png"); break; // voimakasta ukkosta
+                case 71: surface_symbol = IMG_Load("assets/fmi/white/44-128.png"); break; // heikkoja räntäkuuroja
+                case 72: surface_symbol = IMG_Load("assets/fmi/white/45-128.png"); break; // räntäkuuroja
+                case 73: surface_symbol = IMG_Load("assets/fmi/white/46-128.png"); break; // voimakkaita räntäkuuroja
+                case 81: surface_symbol = IMG_Load("assets/fmi/white/47-128.png");  break; // heikkoa räntäsadetta
+                case 82: surface_symbol = IMG_Load("assets/fmi/white/48-128.png");  break; // räntäsadetta
+                case 83: surface_symbol = IMG_Load("assets/fmi/white/49-128.png");  break; // voimakasta räntäsadetta
+                case 91: surface_symbol = IMG_Load("assets/fmi/white/9-128.png");  break; // utua
+                case 92: surface_symbol = IMG_Load("assets/fmi/white/9-128.png");  break; // sumua
+            }
+        else
+            switch (symbol) 
+            {
+                case 1:  surface_symbol = IMG_Load("assets/fmi/white/101-128.png");  break; // selkeää
+                case 2:  surface_symbol = IMG_Load("assets/fmi/white/104-128.png");  break; // puolipilvistä
+                case 21: surface_symbol = IMG_Load("assets/fmi/white/121-128.png"); break; // heikkoja sadekuuroja
+                case 22: surface_symbol = IMG_Load("assets/fmi/white/124-128.png"); break; // sadekuuroja
+                case 23: surface_symbol = IMG_Load("assets/fmi/white/127-128.png"); break; // voimakkaita sadekuuroja
+                case 3:  surface_symbol = IMG_Load("assets/fmi/white/107-128.png");  break; // pilvistä
+                case 31: surface_symbol = IMG_Load("assets/fmi/white/137-128.png"); break; // heikkoa vesisadetta
+                case 32: surface_symbol = IMG_Load("assets/fmi/white/138-128.png"); break; // vesisadetta
+                case 33: surface_symbol = IMG_Load("assets/fmi/white/139-128.png"); break; // voimakasta vesisadetta
+                case 41: surface_symbol = IMG_Load("assets/fmi/white/154-128.png"); break; // heikkoja lumikuuroja
+                case 42: surface_symbol = IMG_Load("assets/fmi/white/155-128.png"); break; // lumikuuroja
+                case 43: surface_symbol = IMG_Load("assets/fmi/white/156-128.png"); break; // voimakkaita lumikuuroja
+                case 51: surface_symbol = IMG_Load("assets/fmi/white/157-128.png"); break; // heikkoa lumisadetta
+                case 52: surface_symbol = IMG_Load("assets/fmi/white/158-128.png"); break; // lumisadetta
+                case 53: surface_symbol = IMG_Load("assets/fmi/white/159-128.png"); break; // voimakasta lumisadetta
+                case 61: surface_symbol = IMG_Load("assets/fmi/white/171-128.png"); break; // ukkoskuuroja
+                case 62: surface_symbol = IMG_Load("assets/fmi/white/174-128.png"); break; // voimakkaita ukkoskuuroja
+                case 63: surface_symbol = IMG_Load("assets/fmi/white/177-128.png"); break; // ukkosta
+                case 64: surface_symbol = IMG_Load("assets/fmi/white/167-128.png"); break; // voimakasta ukkosta
+                case 71: surface_symbol = IMG_Load("assets/fmi/white/144-128.png"); break; // heikkoja räntäkuuroja
+                case 72: surface_symbol = IMG_Load("assets/fmi/white/145-128.png"); break; // räntäkuuroja
+                case 73: surface_symbol = IMG_Load("assets/fmi/white/146-128.png"); break; // voimakkaita räntäkuuroja
+                case 81: surface_symbol = IMG_Load("assets/fmi/white/147-128.png");  break; // heikkoa räntäsadetta
+                case 82: surface_symbol = IMG_Load("assets/fmi/white/148-128.png");  break; // räntäsadetta
+                case 83: surface_symbol = IMG_Load("assets/fmi/white/149-128.png");  break; // voimakasta räntäsadetta
+                case 91: surface_symbol = IMG_Load("assets/fmi/white/109-128.png");  break; // utua
+                case 92: surface_symbol = IMG_Load("assets/fmi/white/109-128.png");  break; // sumua
+            }
 
         render_instr_set_swh(&widget->render_instrs[0].symbol, surface_symbol, 0, 0);
         
@@ -215,6 +252,9 @@ static int update_weather(
 
         for (size_t i = 1; i < sizeof widget->render_instrs / sizeof widget->render_instrs[0]; ++i)
         {
+            // TODO: determine this based on sunset/sundown times
+            is_daytime = (hour + i) % 24 < 7 || (hour + i) % 24 > 21;
+
             sscanf(strtok(NULL, "\r\n"), "%*d-%*d-%*dT%*d:00:00Z,%lf,%d", &celsius, &symbol);
 
             snprintf(buf, sizeof buf, "%.0lf" U8_DEG, celsius);
@@ -227,35 +267,68 @@ static int update_weather(
             TTF_SizeUTF8(fontS, buf, &w, &h);
             render_instr_set_swh(&widget->render_instrs[i].time, surface_celsius, w, h);
 
-            switch (symbol) {
-                case 1:  surface_symbol = IMG_Load("assets/fmi/white/1-48.png");  break; // selkeää
-                case 2:  surface_symbol = IMG_Load("assets/fmi/white/2-48.png");  break; // puolipilvistä
-                case 21: surface_symbol = IMG_Load("assets/fmi/white/21-48.png"); break; // heikkoja sadekuuroja
-                case 22: surface_symbol = IMG_Load("assets/fmi/white/24-48.png"); break; // sadekuuroja
-                case 23: surface_symbol = IMG_Load("assets/fmi/white/27-48.png"); break; // voimakkaita sadekuuroja
-                case 3:  surface_symbol = IMG_Load("assets/fmi/white/7-48.png");  break; // pilvistä
-                case 31: surface_symbol = IMG_Load("assets/fmi/white/31-48.png"); break; // heikkoa vesisadetta
-                case 32: surface_symbol = IMG_Load("assets/fmi/white/32-48.png"); break; // vesisadetta
-                case 33: surface_symbol = IMG_Load("assets/fmi/white/33-48.png"); break; // voimakasta vesisadetta
-                case 41: surface_symbol = IMG_Load("assets/fmi/white/41-48.png"); break; // heikkoja lumikuuroja
-                case 42: surface_symbol = IMG_Load("assets/fmi/white/42-48.png"); break; // lumikuuroja
-                case 43: surface_symbol = IMG_Load("assets/fmi/white/43-48.png"); break; // voimakkaita lumikuuroja
-                case 51: surface_symbol = IMG_Load("assets/fmi/white/51-48.png"); break; // heikkoa lumisadetta
-                case 52: surface_symbol = IMG_Load("assets/fmi/white/52-48.png"); break; // lumisadetta
-                case 53: surface_symbol = IMG_Load("assets/fmi/white/53-48.png"); break; // voimakasta lumisadetta
-                case 61: surface_symbol = IMG_Load("assets/fmi/white/71-48.png"); break; // ukkoskuuroja
-                case 62: surface_symbol = IMG_Load("assets/fmi/white/74-48.png"); break; // voimakkaita ukkoskuuroja
-                case 63: surface_symbol = IMG_Load("assets/fmi/white/77-48.png"); break; // ukkosta
-                case 64: surface_symbol = IMG_Load("assets/fmi/white/67-48.png"); break; // voimakasta ukkosta
-                case 71: surface_symbol = IMG_Load("assets/fmi/white/71-48.png"); break; // heikkoja räntäkuuroja
-                case 72: surface_symbol = IMG_Load("assets/fmi/white/74-48.png"); break; // räntäkuuroja
-                case 73: surface_symbol = IMG_Load("assets/fmi/white/77-48.png"); break; // voimakkaita räntäkuuroja
-                case 81: surface_symbol = IMG_Load("assets/fmi/white/1-48.png");  break; // heikkoa räntäsadetta
-                case 82: surface_symbol = IMG_Load("assets/fmi/white/1-48.png");  break; // räntäsadetta
-                case 83: surface_symbol = IMG_Load("assets/fmi/white/1-48.png");  break; // voimakasta räntäsadetta
-                case 91: surface_symbol = IMG_Load("assets/fmi/white/1-48.png");  break; // utua
-                case 92: surface_symbol = IMG_Load("assets/fmi/white/1-48.png");  break; // sumua
-            }
+            if (is_daytime)
+                switch (symbol) 
+                {
+                    case 1:  surface_symbol = IMG_Load("assets/fmi/white/1-48.png");  break; // selkeää
+                    case 2:  surface_symbol = IMG_Load("assets/fmi/white/4-48.png");  break; // puolipilvistä
+                    case 21: surface_symbol = IMG_Load("assets/fmi/white/21-48.png"); break; // heikkoja sadekuuroja
+                    case 22: surface_symbol = IMG_Load("assets/fmi/white/24-48.png"); break; // sadekuuroja
+                    case 23: surface_symbol = IMG_Load("assets/fmi/white/27-48.png"); break; // voimakkaita sadekuuroja
+                    case 3:  surface_symbol = IMG_Load("assets/fmi/white/7-48.png");  break; // pilvistä
+                    case 31: surface_symbol = IMG_Load("assets/fmi/white/37-48.png"); break; // heikkoa vesisadetta
+                    case 32: surface_symbol = IMG_Load("assets/fmi/white/38-48.png"); break; // vesisadetta
+                    case 33: surface_symbol = IMG_Load("assets/fmi/white/39-48.png"); break; // voimakasta vesisadetta
+                    case 41: surface_symbol = IMG_Load("assets/fmi/white/54-48.png"); break; // heikkoja lumikuuroja
+                    case 42: surface_symbol = IMG_Load("assets/fmi/white/55-48.png"); break; // lumikuuroja
+                    case 43: surface_symbol = IMG_Load("assets/fmi/white/56-48.png"); break; // voimakkaita lumikuuroja
+                    case 51: surface_symbol = IMG_Load("assets/fmi/white/57-48.png"); break; // heikkoa lumisadetta
+                    case 52: surface_symbol = IMG_Load("assets/fmi/white/58-48.png"); break; // lumisadetta
+                    case 53: surface_symbol = IMG_Load("assets/fmi/white/59-48.png"); break; // voimakasta lumisadetta
+                    case 61: surface_symbol = IMG_Load("assets/fmi/white/71-48.png"); break; // ukkoskuuroja
+                    case 62: surface_symbol = IMG_Load("assets/fmi/white/74-48.png"); break; // voimakkaita ukkoskuuroja
+                    case 63: surface_symbol = IMG_Load("assets/fmi/white/77-48.png"); break; // ukkosta
+                    case 64: surface_symbol = IMG_Load("assets/fmi/white/67-48.png"); break; // voimakasta ukkosta
+                    case 71: surface_symbol = IMG_Load("assets/fmi/white/44-48.png"); break; // heikkoja räntäkuuroja
+                    case 72: surface_symbol = IMG_Load("assets/fmi/white/45-48.png"); break; // räntäkuuroja
+                    case 73: surface_symbol = IMG_Load("assets/fmi/white/46-48.png"); break; // voimakkaita räntäkuuroja
+                    case 81: surface_symbol = IMG_Load("assets/fmi/white/47-48.png");  break; // heikkoa räntäsadetta
+                    case 82: surface_symbol = IMG_Load("assets/fmi/white/48-48.png");  break; // räntäsadetta
+                    case 83: surface_symbol = IMG_Load("assets/fmi/white/49-48.png");  break; // voimakasta räntäsadetta
+                    case 91: surface_symbol = IMG_Load("assets/fmi/white/9-48.png");  break; // utua
+                    case 92: surface_symbol = IMG_Load("assets/fmi/white/9-48.png");  break; // sumua
+                }
+            else
+                switch (symbol) 
+                {
+                    case 1:  surface_symbol = IMG_Load("assets/fmi/white/101-48.png");  break; // selkeää
+                    case 2:  surface_symbol = IMG_Load("assets/fmi/white/104-48.png");  break; // puolipilvistä
+                    case 21: surface_symbol = IMG_Load("assets/fmi/white/121-48.png"); break; // heikkoja sadekuuroja
+                    case 22: surface_symbol = IMG_Load("assets/fmi/white/124-48.png"); break; // sadekuuroja
+                    case 23: surface_symbol = IMG_Load("assets/fmi/white/127-48.png"); break; // voimakkaita sadekuuroja
+                    case 3:  surface_symbol = IMG_Load("assets/fmi/white/107-48.png");  break; // pilvistä
+                    case 31: surface_symbol = IMG_Load("assets/fmi/white/137-48.png"); break; // heikkoa vesisadetta
+                    case 32: surface_symbol = IMG_Load("assets/fmi/white/138-48.png"); break; // vesisadetta
+                    case 33: surface_symbol = IMG_Load("assets/fmi/white/139-48.png"); break; // voimakasta vesisadetta
+                    case 41: surface_symbol = IMG_Load("assets/fmi/white/154-48.png"); break; // heikkoja lumikuuroja
+                    case 42: surface_symbol = IMG_Load("assets/fmi/white/155-48.png"); break; // lumikuuroja
+                    case 43: surface_symbol = IMG_Load("assets/fmi/white/156-48.png"); break; // voimakkaita lumikuuroja
+                    case 51: surface_symbol = IMG_Load("assets/fmi/white/157-48.png"); break; // heikkoa lumisadetta
+                    case 52: surface_symbol = IMG_Load("assets/fmi/white/158-48.png"); break; // lumisadetta
+                    case 53: surface_symbol = IMG_Load("assets/fmi/white/159-48.png"); break; // voimakasta lumisadetta
+                    case 61: surface_symbol = IMG_Load("assets/fmi/white/171-48.png"); break; // ukkoskuuroja
+                    case 62: surface_symbol = IMG_Load("assets/fmi/white/174-48.png"); break; // voimakkaita ukkoskuuroja
+                    case 63: surface_symbol = IMG_Load("assets/fmi/white/177-48.png"); break; // ukkosta
+                    case 64: surface_symbol = IMG_Load("assets/fmi/white/167-48.png"); break; // voimakasta ukkosta
+                    case 71: surface_symbol = IMG_Load("assets/fmi/white/144-48.png"); break; // heikkoja räntäkuuroja
+                    case 72: surface_symbol = IMG_Load("assets/fmi/white/145-48.png"); break; // räntäkuuroja
+                    case 73: surface_symbol = IMG_Load("assets/fmi/white/146-48.png"); break; // voimakkaita räntäkuuroja
+                    case 81: surface_symbol = IMG_Load("assets/fmi/white/147-48.png");  break; // heikkoa räntäsadetta
+                    case 82: surface_symbol = IMG_Load("assets/fmi/white/148-48.png");  break; // räntäsadetta
+                    case 83: surface_symbol = IMG_Load("assets/fmi/white/149-48.png");  break; // voimakasta räntäsadetta
+                    case 91: surface_symbol = IMG_Load("assets/fmi/white/109-48.png");  break; // utua
+                    case 92: surface_symbol = IMG_Load("assets/fmi/white/109-48.png");  break; // sumua
+                }
 
             render_instr_set_swh(&widget->render_instrs[i].symbol, surface_symbol, 0, 0);
             
