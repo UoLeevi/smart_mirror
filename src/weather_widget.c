@@ -37,6 +37,7 @@
 #include "SDL_image.h"
 
 #include <stdio.h>
+#include <math.h>
 
 #include <unistd.h>
 
@@ -51,6 +52,86 @@ static SDL_Renderer *renderer;
 static SDL_Color white = { 255, 255, 255 };
 
 static TTF_Font *fontXL, *fontL, *fontM, *fontS;
+
+// http://edwilliams.org/sunrise_sunset_algorithm.htm
+static double get_sunrise_or_sunset_hour_utc(
+    int year,
+    int month,
+    int day,
+    double latitude,
+    double longitude,
+    bool is_sunrise)
+{
+    const double zenith = 90.0 + 50.0 / 60.0;
+    const double pi = 3.1415926;
+
+    // 1. first calculate the day of the year
+    double N1 = floor(275 * month / 9);
+    double N2 = floor((month + 9) / 12);
+    double N3 = (1 + floor((year - 4 * floor(year / 4) + 2) / 3));
+    double N = N1 - (N2 * N3) + day - 30;
+
+    // 2. convert the longitude to hour value and calculate an approximate time
+	double lngHour = longitude / 15;
+    double t = is_sunrise
+        ? N + ((6 - lngHour) / 24)
+	    : N + ((18 - lngHour) / 24);
+
+    // 3. calculate the Sun's mean anomaly
+	double M = (0.9856 * t) - 3.289;
+
+    // 4. calculate the Sun's true longitude
+    double L = M + (1.916 * sin((pi / 180) * M)) + (0.020 * sin((pi / 180) * 2 * M)) + 282.634;
+
+    if (L >= 360.0)
+        L -= 360.0;
+    else if (L < 0)
+        L += 360.0;
+
+    // 5a. calculate the Sun's right ascension
+	double RA = (180 / pi ) * atan(0.91764 * tan((pi / 180) * L));
+
+    if (RA >= 360.0)
+        RA -= 360.0;
+    else if (L < 0)
+        RA += 360.0;
+
+    // 5b. right ascension value needs to be in the same quadrant as L
+	double Lquadrant  = (floor( L/90)) * 90;
+	double RAquadrant = (floor(RA/90)) * 90;
+	RA = RA + (Lquadrant - RAquadrant);
+
+    // 5c. right ascension value needs to be converted into hours
+	RA = RA / 15;
+
+    // 6. calculate the Sun's declination
+	double sinDec = 0.39782 * sin((pi / 180) * L);
+	double cosDec = cos(asin(sinDec));
+
+    // 7a. calculate the Sun's local hour angle
+	double cosH = (cos((pi / 180) * zenith) - (sinDec * sin((pi / 180) * latitude))) / (cosDec * cos((pi / 180) * latitude));
+	
+    if (is_sunrise ? cosH > 1.0 : cosH < -1.0)
+        return -1.0;
+
+    // 7b. finish calculating H and convert into hours
+    double H = is_sunrise
+	    ? 360 - (180 / pi ) * acos(cosH)
+        : (180 / pi ) * acos(cosH);
+	H = H / 15;
+
+    // 8. calculate local mean time of rising/setting
+	double T = H + RA - (0.06571 * t) - 6.622;
+
+    double UT = T - lngHour;
+
+    if (UT >= 24.0)
+        UT -= 24.0;
+    else if (UT < 0)
+        UT += 24.0;
+
+    return UT;
+}
 
 static long tz_offset_second(void) 
 {
@@ -164,15 +245,45 @@ static int update_weather(
 
         double celsius;
         int symbol;
-        int hour;
+        int year, month, day, hour;
         bool is_daytime;
 
-        sscanf(strtok(weather, "\r\n"), "%*d-%*d-%*dT%d:00:00Z,%lf,%d", &hour, &celsius, &symbol);
+        sscanf(strtok(weather, "\r\n"), "%d-%d-%dT%d:00:00Z,%lf,%d", &year, &month, &day, &hour, &celsius, &symbol);
 
-        hour += tz_offset_second() / 3600;
+        long tz_offset_hours = tz_offset_second() / 3600;
 
-        // TODO: determine this based on sunset/sundown times
-        is_daytime = hour < 7 || hour > 21;
+        hour += tz_offset_hours;
+
+        if (hour >= 24)
+            hour -= 24;
+        else if (hour < 0)
+            hour += 24;
+
+        // TODO:
+        // Get latitude and longitude based on place
+        // Get next sunrise and next sunset, not today's sunrise and sundown
+        double sunrise = get_sunrise_or_sunset_hour_utc(year, month, day, 61.87, 28.88, true);
+        double sunset = get_sunrise_or_sunset_hour_utc(year, month, day, 61.87, 28.88, false);
+
+        if (sunrise != -1.0) 
+        {
+            sunrise += tz_offset_hours;
+            if (sunrise >= 24.0)
+                sunrise -= 24.0;
+            else if (sunrise < 0.0)
+                sunrise += 24.0;
+        }
+
+        if (sunset != -1.0) 
+        {
+            sunset += tz_offset_hours;
+            if (sunset >= 24.0)
+                sunset -= 24.0;
+            else if (sunset < 0.0)
+                sunset += 24.0;
+        }
+
+        is_daytime = sunset == -1.0 || hour < sunset && hour > sunrise && sunrise != -1.0;
 
         int w, h;
         SDL_Surface *surface_celsius, *surface_symbol;
@@ -252,8 +363,7 @@ static int update_weather(
 
         for (size_t i = 1; i < sizeof widget->render_instrs / sizeof widget->render_instrs[0]; ++i)
         {
-            // TODO: determine this based on sunset/sundown times
-            is_daytime = (hour + i) % 24 < 7 || (hour + i) % 24 > 21;
+            is_daytime = sunset == -1.0 || (hour + i) % 24 < sunset && (hour + i) % 24 > sunrise && sunrise != -1.0;
 
             sscanf(strtok(NULL, "\r\n"), "%*d-%*d-%*dT%*d:00:00Z,%lf,%d", &celsius, &symbol);
 
