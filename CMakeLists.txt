@@ -60,7 +60,8 @@ target_link_libraries("${CMAKE_PROJECT_NAME}"
         "${LIBSDL2}"
 		"${LIBSDL2_image}"
 		"${LIBSDL2_ttf}"
-		"${LIBUO_SOCK}")
+		"${LIBUO_SOCK}"
+		m)
 
 if(WIN32)
     target_link_libraries("${CMAKE_PROJECT_NAME}"
