@@ -92,6 +92,7 @@ int main(int argc, char **argv) {
 
 	while (!is_close_requested) 
 	{
+		bool is_rerender_required = false;
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 			switch (event.type) 
@@ -99,6 +100,7 @@ int main(int argc, char **argv) {
 				case SDL_QUIT:
 					is_close_requested = true;
 					break;
+
 				case SDL_KEYDOWN:
 					switch (event.key.keysym.scancode) 
 					{
@@ -110,14 +112,28 @@ int main(int argc, char **argv) {
 							bool is_fullscreen = SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP;
 							SDL_ShowCursor(is_fullscreen ? SDL_ENABLE : SDL_DISABLE);
 							SDL_SetWindowFullscreen(window, is_fullscreen ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
-							weather_widget_update_dest(weather_w);
-							time_widget_update_dest(time_w);
 							break;
 						}
 					}
+					break;
+
+				case SDL_WINDOWEVENT:
+					switch (event.window.event) 
+					{
+						case SDL_WINDOWEVENT_SIZE_CHANGED:
+							weather_widget_update_dest(weather_w);
+							time_widget_update_dest(time_w);
+							break;
+
+						case SDL_WINDOWEVENT_RESTORED:
+							is_rerender_required = true;
+							break;
+					}
+					break;
 			}
 
-		if (time_widget_is_render_required(time_w) ||
+		if (is_rerender_required ||
+			time_widget_is_render_required(time_w) ||
 			weather_widget_is_render_required(weather_w))
 		{
 			SDL_RenderClear(renderer);
