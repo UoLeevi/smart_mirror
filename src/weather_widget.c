@@ -223,7 +223,10 @@ static int update_weather(
         }
 
 		size_t place_len = strlen(widget->place);
-		p = memcpy(buf, widget->place, place_len) + place_len;
+
+        p = buf;
+        p = memcpy(p, "WEATHER ", 8) + 8;
+		p = memcpy(p, widget->place, place_len) + place_len;
 		p = memcpy(p, "\r\n", 2) + 2;
 
         char *weather = p;
@@ -243,12 +246,18 @@ static int update_weather(
 		send(sockfd, "\0", 1, 0);
 		close(sockfd);
 
+        double latitude;
+        double longitude;
         double celsius;
         int symbol;
         int year, month, day, hour;
         bool is_daytime;
 
-        sscanf(strtok(weather, "\r\n"), "%d-%d-%dT%d:00:00Z,%lf,%d", &year, &month, &day, &hour, &celsius, &symbol);
+        char *line = strtok(weather, "\r\n");
+        sscanf(line, "%lf,%lf", &latitude, &longitude);
+
+        line = strtok(NULL, "\r\n");
+        sscanf(line, "%d-%d-%dT%d:00:00Z,%lf,%d", &year, &month, &day, &hour, &celsius, &symbol);
 
         long tz_offset_hours = tz_offset_second() / 3600;
 
@@ -262,8 +271,8 @@ static int update_weather(
         // TODO:
         // Get latitude and longitude based on place
         // Get next sunrise and next sunset, not today's sunrise and sundown
-        double sunrise = get_sunrise_or_sunset_hour_utc(year, month, day, 61.87, 28.88, true);
-        double sunset = get_sunrise_or_sunset_hour_utc(year, month, day, 61.87, 28.88, false);
+        double sunrise = get_sunrise_or_sunset_hour_utc(year, month, day, latitude, longitude, true);
+        double sunset = get_sunrise_or_sunset_hour_utc(year, month, day, latitude, longitude, false);
 
         if (sunrise != -1.0) 
         {
@@ -365,7 +374,8 @@ static int update_weather(
         {
             is_daytime = sunset == -1.0 || (hour + i) % 24 < sunset && (hour + i) % 24 > sunrise && sunrise != -1.0;
 
-            sscanf(strtok(NULL, "\r\n"), "%*d-%*d-%*dT%*d:00:00Z,%lf,%d", &celsius, &symbol);
+            line = strtok(NULL, "\r\n");
+            sscanf(line, "%*d-%*d-%*dT%*d:00:00Z,%lf,%d", &celsius, &symbol);
 
             snprintf(buf, sizeof buf, "%.0lf" U8_DEG, celsius);
             surface_celsius = TTF_RenderUTF8_Blended(fontS, buf, white);
