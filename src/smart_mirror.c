@@ -125,6 +125,7 @@ int main(int argc, char **argv) {
 							time_widget_update_dest(time_w);
 							break;
 
+						case SDL_WINDOWEVENT_EXPOSED:
 						case SDL_WINDOWEVENT_RESTORED:
 							is_rerender_required = true;
 							break;
