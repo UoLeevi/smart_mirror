@@ -194,6 +194,8 @@ static char *request_weather(
     if (send(sockfd, buf, p - buf, 0) == -1)
         return NULL;
 
+    shutdown(sockfd, SHUT_WR);
+
     end = NULL;
     while (!end) {
         p += len = recv(sockfd, p, buf_len - (p - buf), 0);
@@ -203,10 +205,12 @@ static char *request_weather(
         end = strstr(buf, "CLOSING\r\n");
     }
 
-    send(sockfd, "\0", 1, 0);
+    shutdown(sockfd, SHUT_RD);
     close(sockfd);
 
-    return weather;
+    return memcmp(weather, "ERROR\r\n", 7)
+        ? weather
+        : NULL;
 }
 
 static int update_weather(
