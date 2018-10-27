@@ -173,21 +173,9 @@ static char *request_weather(
     if (connect(sockfd, weatherserv_addrinfo->ai_addr, weatherserv_addrinfo->ai_addrlen) == -1)
         return NULL;
 
-    ssize_t len = 0;
-    char *end = NULL;
     char *p = buf;
-    while (!end) {
-        p += len = recv(sockfd, p, buf_len - (p - buf), 0);
-        if (len == -1)
-            break; //error TODO: handle
-        *p = '\0';
-        end = strstr(buf, "READY\r\n");
-    }
-
-    p = buf;
     p = memcpy(p, "WEATHER ", 8) + 8;
     p = memcpy(p, place, place_len) + place_len;
-    p = memcpy(p, "\r\n", 2) + 2;
 
     char *weather = p;
 
@@ -196,19 +184,22 @@ static char *request_weather(
 
     shutdown(sockfd, SHUT_WR);
 
-    end = NULL;
-    while (!end) {
-        p += len = recv(sockfd, p, buf_len - (p - buf), 0);
+    ssize_t len = 0;
+
+    do
+    {
+        len = recv(sockfd, p, buf_len - (p - buf), 0);
         if (len == -1)
             break; //error TODO: handle
-        *p = '\0';
-        end = strstr(buf, "CLOSING\r\n");
-    }
+        
+        p += len;
+
+    } while (len);
 
     shutdown(sockfd, SHUT_RD);
     close(sockfd);
 
-    return memcmp(weather, "ERROR\r\n", 7)
+    return p > weather
         ? weather
         : NULL;
 }
@@ -270,10 +261,9 @@ static int update_weather(
             bool is_daytime;
 
             char *line = strtok(weather, "\r\n");
-            sscanf(line, "%lf,%lf", &latitude, &longitude);
-
+            sscanf(line, "%lf,%lf,%d-%d-%dT%d:00:00Z,%lf,%d", &latitude, &longitude, &year, &month, &day, &hour);
             line = strtok(NULL, "\r\n");
-            sscanf(line, "%d-%d-%dT%d:00:00Z,%lf,%d", &year, &month, &day, &hour, &celsius, &symbol);
+            sscanf(line, "%lf,%d", &celsius, &symbol);
 
             long tz_offset_hours = tz_offset_second() / 3600;
 
@@ -391,7 +381,7 @@ static int update_weather(
                 is_daytime = sunset == -1.0 || (hour + i) % 24 < sunset && (hour + i) % 24 > sunrise && sunrise != -1.0;
 
                 line = strtok(NULL, "\r\n");
-                sscanf(line, "%*d-%*d-%*dT%*d:00:00Z,%lf,%d", &celsius, &symbol);
+                sscanf(line, "%lf,%d", &celsius, &symbol);
 
                 snprintf(buf, sizeof buf, "%.0lf" U8_DEG, celsius);
                 surface_celsius = TTF_RenderUTF8_Blended(fontS, buf, white);
