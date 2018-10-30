@@ -23,6 +23,10 @@ typedef struct smart_mirror_conf_t {
 		int x, y;
 		render_instr_dest_origin dest_origin;
 	} time_widget_conf;
+	struct {
+		int x, y;
+		render_instr_dest_origin dest_origin;
+	} msg_widget_conf;
 } smart_mirror_conf_t;
 
 smart_mirror_conf_t *smart_mirror_conf_create(void);

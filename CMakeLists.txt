@@ -7,10 +7,11 @@ if(WIN32)
 endif()
 
 set(CMAKE_PREFIX_PATH "../libuo")
-
+set(CMAKE_C_FLAGS -pthread)
 set(CMAKE_C_STANDARD 11)
 
 add_executable(smart_mirror
+	src/msg_widget.c
 	src/render_instr.c
     src/smart_mirror.c
     src/smart_mirror_conf.c
@@ -20,7 +21,38 @@ add_executable(smart_mirror
 target_include_directories("${CMAKE_PROJECT_NAME}"
     PRIVATE
         src
-		../libuo/uo_sock/include)
+        ../libuo/uo_hashtbl/include
+        ../libuo/uo_queue/include
+        ../libuo/uo_cb/include
+        ../libuo/uo_err/include
+        ../libuo/uo_tcpserv/include
+        ../libuo/uo_httpc/include
+        ../libuo/uo_sock/include
+        ../libuo/uo_mem/include)
+
+find_library(LIBUO_HASHTBL
+    NAMES uo_hashtbl
+    HINTS "${CMAKE_PREFIX_PATH}/uo_hashtbl/lib")
+
+find_library(LIBUO_QUEUE
+    NAMES uo_queue
+    HINTS "${CMAKE_PREFIX_PATH}/uo_queue/lib")
+
+find_library(LIBUO_CB
+    NAMES uo_cb
+    HINTS "${CMAKE_PREFIX_PATH}/uo_cb/lib")
+
+find_library(LIBUO_ERR
+    NAMES uo_err
+    HINTS "${CMAKE_PREFIX_PATH}/uo_err/lib")
+
+find_library(LIBUO_TCPSERV
+    NAMES uo_tcpserv
+    HINTS "${CMAKE_PREFIX_PATH}/uo_tcpserv/lib")
+
+find_library(LIBUO_HTTPC 
+    NAMES uo_httpc
+    HINTS "${CMAKE_PREFIX_PATH}/uo_httpc/lib")
 
 find_library(LIBUO_SOCK 
     NAMES uo_sock
@@ -57,6 +89,11 @@ endif()
 
 target_link_libraries("${CMAKE_PROJECT_NAME}"
     PRIVATE
+        "${LIBUO_TCPSERV}"
+        "${LIBUO_CB}"
+        "${LIBUO_QUEUE}"
+        "${LIBUO_SOCK}"
+        "${LIBUO_ERR}"
         "${LIBSDL2}"
 		"${LIBSDL2_image}"
 		"${LIBSDL2_ttf}"
@@ -79,11 +116,15 @@ set_target_properties("${CMAKE_PROJECT_NAME}"
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     configure_file(conf/smart_mirror.conf
         "${CMAKE_SOURCE_DIR}/bin/debug/smart_mirror.conf" COPYONLY)
+	configure_file(conf/msg_widget.conf
+        "${CMAKE_SOURCE_DIR}/bin/debug/uo_tcpserv.conf" COPYONLY)
 	file(COPY assets 
 		DESTINATION "${CMAKE_SOURCE_DIR}/bin/debug")
 else()
     configure_file(conf/smart_mirror.conf
         "${CMAKE_SOURCE_DIR}/bin/release/smart_mirror.conf" COPYONLY)
+	configure_file(conf/msg_widget.conf
+        "${CMAKE_SOURCE_DIR}/bin/release/uo_tcpserv.conf" COPYONLY)
 	file(COPY assets 
 		DESTINATION "${CMAKE_SOURCE_DIR}/bin/release")
 endif()

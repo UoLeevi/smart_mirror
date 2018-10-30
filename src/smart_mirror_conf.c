@@ -16,7 +16,8 @@ static const char path_separator =
 typedef enum conf_token_t {
     NONE = 0,
     WEATHER_WIDGET,
-    TIME_WIDGET
+    TIME_WIDGET,
+    MSG_WIDGET
 } conf_token_t;
 
 conf_token_t conf_token_parse(
@@ -62,7 +63,15 @@ smart_mirror_conf_t *smart_mirror_conf_create()
             return NULL;
         }
 
-        switch (conf_token) {
+        switch (conf_token) 
+        {
+            case MSG_WIDGET: {
+                char* endptr;
+                smart_mirror_conf->msg_widget_conf.x = strtol(strtok(NULL, delim), &endptr, 10);
+                smart_mirror_conf->msg_widget_conf.y = strtol(strtok(NULL, delim), &endptr, 10);
+                RENDER_INSTR_DEST_ORIGIN_FROM_STR(smart_mirror_conf->msg_widget_conf.dest_origin, strtok(NULL, delim));
+                break;
+			}
 
 			case TIME_WIDGET: {
                 char* endptr;
@@ -112,6 +121,9 @@ conf_token_t conf_token_parse(char *token) {
 
     if (strcmp(token, "time_widget") == 0)
         return TIME_WIDGET;
+
+    if (strcmp(token, "msg_widget") == 0)
+        return MSG_WIDGET;
 
     else
         // unrecognized token

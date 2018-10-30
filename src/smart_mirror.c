@@ -1,6 +1,7 @@
 #include "smart_mirror_conf.h"
 #include "weather_widget.h"
 #include "time_widget.h"
+#include "msg_widget.h"
 
 #include "SDL.h"
 #include "SDL_timer.h"
@@ -79,6 +80,13 @@ int main(int argc, char **argv) {
 		return 1;
 	};
 
+	if (!msg_widget_init(renderer)) {
+		printf("Could not create initialize msg widget: %s\n", SDL_GetError());
+		SDL_DestroyRenderer(renderer);
+		SDL_DestroyWindow(window);
+		return 1;
+	};
+
 	weather_widget *weather_w = weather_widget_create(
 		conf->weather_widget_conf.place, 
 		conf->weather_widget_conf.x, 
@@ -89,6 +97,11 @@ int main(int argc, char **argv) {
 		conf->time_widget_conf.x, 
 		conf->time_widget_conf.y,
 		conf->time_widget_conf.dest_origin);
+
+	msg_widget *msg_w = msg_widget_create(
+		conf->msg_widget_conf.x, 
+		conf->msg_widget_conf.y,
+		conf->msg_widget_conf.dest_origin);
 
 	while (!is_close_requested) 
 	{
@@ -135,12 +148,14 @@ int main(int argc, char **argv) {
 
 		if (is_rerender_required ||
 			time_widget_is_render_required(time_w) ||
-			weather_widget_is_render_required(weather_w))
+			weather_widget_is_render_required(weather_w) ||
+			msg_widget_is_render_required(msg_w))
 		{
 			SDL_RenderClear(renderer);
 
 			weather_widget_render(weather_w);
 			time_widget_render(time_w);
+			msg_widget_render(msg_w);
 
 			SDL_RenderPresent(renderer);
 		}
@@ -155,6 +170,7 @@ int main(int argc, char **argv) {
 
 	weather_widget_destroy(weather_w);
 	time_widget_destroy(time_w);
+	msg_widget_destroy(msg_w);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 
