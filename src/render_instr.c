@@ -153,5 +153,6 @@ bool render_instr_render(
         } 
     }
 
-    SDL_RenderCopy(renderer, instr->texture, NULL, instr->dest);
+    if (instr->texture)
+        SDL_RenderCopy(renderer, instr->texture, NULL, instr->dest);
 }
