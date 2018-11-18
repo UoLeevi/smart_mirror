@@ -1,6 +1,8 @@
 #include "msg_widget.h"
 
-#include "uo_tcpserv.h"
+#include "uo_conf.h"
+#include "uo_ipc.h"
+#include "uo_ipcs.h"
 
 #include "SDL.h"
 #include "SDL_timer.h"
@@ -21,8 +23,8 @@ static TTF_Font *fontXL, *fontL, *fontM, *fontS;
 static msg_widget *active_widget;
 
 static void *msg_widget_handle_cmd(
-    uo_tcpserv_arg *cmd,
-    uo_cb *uo_tcpserv_res_cb)
+    uo_ipcmsg *cmd,
+    uo_cb *uo_ipcmsg_cb)
 {    
     bool has_msg = cmd->data && cmd->data_len;
 
@@ -39,7 +41,7 @@ static void *msg_widget_handle_cmd(
         active_widget->is_ready = true;
     }
 
-    uo_cb_invoke_async(uo_tcpserv_res_cb, NULL, NULL);
+    uo_cb_invoke_async(uo_ipcmsg_cb, NULL, NULL);
 
     if (has_msg)
     {
@@ -67,7 +69,11 @@ static int init_update_msg(
     widget->render_instrs.msg.dest_origin = MIDDLE_CENTER;
     render_instr_set_xy(&widget->render_instrs.msg, x, y);
 
-    uo_tcpserv_start(NULL, msg_widget_handle_cmd);
+    uo_conf *conf = widget->conf = uo_conf_create("msg_widget.conf");
+
+    char *port = uo_conf_get(conf, "port");
+    widget->ipcs = uo_ipcs_create(port, strlen(port), msg_widget_handle_cmd);
+
 }
 
 static void msg_widget_quit(void)
@@ -92,9 +98,10 @@ bool msg_widget_init(
     fontM  = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 32);
     fontS  = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 24);
 
-    uo_cb_init();
-
     is_init = true;
+
+    is_init &= uo_cb_init();
+    is_init &= uo_ipc_init();
     
     atexit(msg_widget_quit);
 

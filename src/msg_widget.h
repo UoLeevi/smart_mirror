@@ -16,6 +16,8 @@ extern "C" {
 typedef struct msg_widget 
 {
     SDL_Thread *thrd;
+    void *conf;
+    void *ipcs;
     int x, y;
     render_instr_dest_origin dest_origin;
     bool is_ready;
