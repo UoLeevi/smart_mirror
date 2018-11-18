@@ -31,6 +31,8 @@
 #include "weather_widget.h"
 
 #include "uo_sock.h"
+#include "uo_ipcc.h"
+#include "uo_mem.h"
 
 #include "SDL.h"
 #include "SDL_timer.h"
@@ -161,68 +163,12 @@ static void weather_widget_quit(void)
     TTF_CloseFont(fontS);
 }
 
-static char *request_weather(
-    char *buf,
-    size_t buf_len,
-    struct addrinfo *weatherserv_addrinfo,
-    char *place,
-    size_t place_len)
-{
-    int sockfd = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-
-    if (connect(sockfd, weatherserv_addrinfo->ai_addr, weatherserv_addrinfo->ai_addrlen) == -1)
-        return NULL;
-
-    char *p = buf;
-    p = memcpy(p, "WEATHER ", 8) + 8;
-    p = memcpy(p, place, place_len) + place_len;
-
-    char *weather = p;
-
-    if (send(sockfd, buf, p - buf, 0) == -1)
-        return NULL;
-
-    shutdown(sockfd, SHUT_WR);
-
-    ssize_t len = 0;
-
-    do
-    {
-        len = recv(sockfd, p, buf_len - (p - buf), 0);
-        if (len == -1)
-            break; //error TODO: handle
-        
-        p += len;
-
-    } while (len);
-
-    shutdown(sockfd, SHUT_RD);
-    close(sockfd);
-
-    return p > weather
-        ? weather
-        : NULL;
-}
-
 static int update_weather(
 	void *arg)
 {
     weather_widget *widget = arg;
 
-	struct addrinfo hints = {
-        .ai_family = AF_UNSPEC,
-        .ai_socktype = SOCK_STREAM,
-        .ai_protocol = IPPROTO_TCP
-    }, *weatherserv_addrinfo;
-
-    int s = getaddrinfo("localhost", "12001", &hints, &weatherserv_addrinfo);
-    
-    if (s != 0) {
-        printf("getaddrinfo: %s\n", gai_strerror(s));
-        return 0;
-    }
-
-	char buf[0x1000];
+    uo_ipcc *ipcc = uo_ipcc_create("localhost", 9, "12001", 5);
 
     int x = widget->x;
     int y = widget->y;
@@ -247,9 +193,15 @@ static int update_weather(
         render_instr_set_xy(&widget->render_instrs[i].time,    x - 64, y + i * 48 + 28);
     }
 
+    char buf[0x100] = { 0 };
+    uo_ipcmsg msg = { 0 };
+
     while (!widget->is_close_requested)
     {
-        char *weather = request_weather(buf, sizeof buf, weatherserv_addrinfo, widget->place, strlen(widget->place));
+        size_t cmd_len = snprintf(buf, sizeof buf, "WEATHER %s", widget->place);
+        msg = uo_ipcc_send_msg(ipcc, (uo_ipcmsg) { .data = buf, .data_len = cmd_len }, true);
+
+        char *weather = msg.data;
 
 		if (weather)
         {
@@ -333,21 +285,21 @@ static int update_weather(
                     case 71: surface_symbol = IMG_Load("assets/fmi/white/44-128.png"); break; // heikkoja räntäkuuroja
                     case 72: surface_symbol = IMG_Load("assets/fmi/white/45-128.png"); break; // räntäkuuroja
                     case 73: surface_symbol = IMG_Load("assets/fmi/white/46-128.png"); break; // voimakkaita räntäkuuroja
-                    case 81: surface_symbol = IMG_Load("assets/fmi/white/47-128.png");  break; // heikkoa räntäsadetta
-                    case 82: surface_symbol = IMG_Load("assets/fmi/white/48-128.png");  break; // räntäsadetta
-                    case 83: surface_symbol = IMG_Load("assets/fmi/white/49-128.png");  break; // voimakasta räntäsadetta
+                    case 81: surface_symbol = IMG_Load("assets/fmi/white/47-128.png"); break; // heikkoa räntäsadetta
+                    case 82: surface_symbol = IMG_Load("assets/fmi/white/48-128.png"); break; // räntäsadetta
+                    case 83: surface_symbol = IMG_Load("assets/fmi/white/49-128.png"); break; // voimakasta räntäsadetta
                     case 91: surface_symbol = IMG_Load("assets/fmi/white/9-128.png");  break; // utua
                     case 92: surface_symbol = IMG_Load("assets/fmi/white/9-128.png");  break; // sumua
                 }
             else
                 switch (symbol) 
                 {
-                    case 1:  surface_symbol = IMG_Load("assets/fmi/white/101-128.png");  break; // selkeää
-                    case 2:  surface_symbol = IMG_Load("assets/fmi/white/104-128.png");  break; // puolipilvistä
+                    case 1:  surface_symbol = IMG_Load("assets/fmi/white/101-128.png"); break; // selkeää
+                    case 2:  surface_symbol = IMG_Load("assets/fmi/white/104-128.png"); break; // puolipilvistä
                     case 21: surface_symbol = IMG_Load("assets/fmi/white/121-128.png"); break; // heikkoja sadekuuroja
                     case 22: surface_symbol = IMG_Load("assets/fmi/white/124-128.png"); break; // sadekuuroja
                     case 23: surface_symbol = IMG_Load("assets/fmi/white/127-128.png"); break; // voimakkaita sadekuuroja
-                    case 3:  surface_symbol = IMG_Load("assets/fmi/white/107-128.png");  break; // pilvistä
+                    case 3:  surface_symbol = IMG_Load("assets/fmi/white/107-128.png"); break; // pilvistä
                     case 31: surface_symbol = IMG_Load("assets/fmi/white/137-128.png"); break; // heikkoa vesisadetta
                     case 32: surface_symbol = IMG_Load("assets/fmi/white/138-128.png"); break; // vesisadetta
                     case 33: surface_symbol = IMG_Load("assets/fmi/white/139-128.png"); break; // voimakasta vesisadetta
@@ -364,11 +316,11 @@ static int update_weather(
                     case 71: surface_symbol = IMG_Load("assets/fmi/white/144-128.png"); break; // heikkoja räntäkuuroja
                     case 72: surface_symbol = IMG_Load("assets/fmi/white/145-128.png"); break; // räntäkuuroja
                     case 73: surface_symbol = IMG_Load("assets/fmi/white/146-128.png"); break; // voimakkaita räntäkuuroja
-                    case 81: surface_symbol = IMG_Load("assets/fmi/white/147-128.png");  break; // heikkoa räntäsadetta
-                    case 82: surface_symbol = IMG_Load("assets/fmi/white/148-128.png");  break; // räntäsadetta
-                    case 83: surface_symbol = IMG_Load("assets/fmi/white/149-128.png");  break; // voimakasta räntäsadetta
-                    case 91: surface_symbol = IMG_Load("assets/fmi/white/109-128.png");  break; // utua
-                    case 92: surface_symbol = IMG_Load("assets/fmi/white/109-128.png");  break; // sumua
+                    case 81: surface_symbol = IMG_Load("assets/fmi/white/147-128.png"); break; // heikkoa räntäsadetta
+                    case 82: surface_symbol = IMG_Load("assets/fmi/white/148-128.png"); break; // räntäsadetta
+                    case 83: surface_symbol = IMG_Load("assets/fmi/white/149-128.png"); break; // voimakasta räntäsadetta
+                    case 91: surface_symbol = IMG_Load("assets/fmi/white/109-128.png"); break; // utua
+                    case 92: surface_symbol = IMG_Load("assets/fmi/white/109-128.png"); break; // sumua
                 }
 
             render_instr_set_swh(&widget->render_instrs[0].symbol, surface_symbol, 0, 0);
@@ -479,6 +431,7 @@ bool weather_widget_init(
     SDL_Renderer *renderer_)
 {
     uo_sock_init();
+    uo_ipc_init();
 
     renderer = renderer_;
 

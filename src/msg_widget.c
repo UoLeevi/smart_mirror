@@ -92,7 +92,7 @@ bool msg_widget_init(
     fontM  = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 32);
     fontS  = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 24);
 
-    uo_cb_init(1);
+    uo_cb_init();
 
     is_init = true;
     

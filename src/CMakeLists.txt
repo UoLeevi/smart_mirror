@@ -16,6 +16,9 @@ endif()
 if(NOT TARGET uo::uo_tcpserv)
     find_package(uo_tcpserv CONFIG REQUIRED)
 endif()
+if(NOT TARGET uo::uo_ipc)
+    find_package(uo_ipc CONFIG REQUIRED)
+endif()
 
 add_executable(smart_mirror
     msg_widget.c
@@ -39,6 +42,7 @@ target_link_libraries(smart_mirror
         uo::uo_httpc
         uo::uo_mem
         uo::uo_tcpserv
+        uo::uo_ipc
         SDL2::SDL2_image
         SDL2::SDL2_ttf
         SDL2::SDL2
