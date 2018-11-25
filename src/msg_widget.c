@@ -133,7 +133,7 @@ void msg_widget_destroy(
 bool msg_widget_is_render_required(
     msg_widget *widget)
 {
-    return !!widget->render_instrs.msg.flags;
+    return render_instr_is_render_required(&widget->render_instrs.msg);
 }
 
 bool msg_widget_render(

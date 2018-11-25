@@ -122,11 +122,9 @@ void time_widget_destroy(
 bool time_widget_is_render_required(
     time_widget *widget)
 {
-    return widget->render_instrs.date.flags 
-        | widget->render_instrs.wday.flags 
-        | widget->render_instrs.time.flags
-            ? true 
-            : false;
+    return render_instr_is_render_required(&widget->render_instrs.date)
+        || render_instr_is_render_required(&widget->render_instrs.wday)
+        || render_instr_is_render_required(&widget->render_instrs.time);
 }
 
 bool time_widget_render(

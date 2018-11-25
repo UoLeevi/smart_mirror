@@ -82,6 +82,9 @@ bool render_instr_set_swh(
     int w,
     int h);
 
+bool render_instr_is_render_required(
+    render_instr *instr);
+
 bool render_instr_set_xy(
     render_instr *instr,
     int x,

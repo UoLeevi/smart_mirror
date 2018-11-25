@@ -71,6 +71,12 @@ bool render_instr_set_xy(
     instr->flags |= 0x2;
 }
 
+bool render_instr_is_render_required(
+    render_instr *instr)
+{
+    return instr->flags & 0x80;
+}
+
 bool render_instr_update(
     render_instr *instr)
 {

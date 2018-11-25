@@ -482,9 +482,9 @@ bool weather_widget_is_render_required(
     weather_widget *widget)
 {
     for (size_t i = 0; i < sizeof widget->render_instrs / sizeof widget->render_instrs[0]; ++i)
-        if (widget->render_instrs[i].celsius.flags |
-            widget->render_instrs[i].symbol.flags |
-            widget->render_instrs[i].time.flags)
+        if (render_instr_is_render_required(&widget->render_instrs[i].celsius) |
+            render_instr_is_render_required(&widget->render_instrs[i].symbol) |
+            render_instr_is_render_required(&widget->render_instrs[i].time))
             return true;
 
     return false;
