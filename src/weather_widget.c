@@ -168,7 +168,7 @@ static int update_weather(
 {
     weather_widget *widget = arg;
 
-    uo_ipcc *ipcc = uo_ipcc_create("localhost", 9, "12001", 5);
+    uo_ipcc *ipcc = uo_ipcc_create("localhost", "12001");
 
     int x = widget->x;
     int y = widget->y;
@@ -199,7 +199,7 @@ static int update_weather(
     while (!widget->is_close_requested)
     {
         size_t cmd_len = snprintf(buf, sizeof buf, "WEATHER %s", widget->place);
-        msg = uo_ipcc_send_msg(ipcc, (uo_ipcmsg) { .data = buf, .data_len = cmd_len }, true);
+        msg = uo_ipcc_send_msg(ipcc, (uo_ipcmsg) { .data = buf, .data_len = cmd_len, .is_last_msg = true });
 
         char *weather = msg.data;
 

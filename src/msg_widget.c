@@ -72,7 +72,7 @@ static int init_update_msg(
     uo_conf *conf = widget->conf = uo_conf_create("msg_widget.conf");
 
     char *port = uo_conf_get(conf, "port");
-    widget->ipcs = uo_ipcs_create(port, strlen(port), msg_widget_handle_cmd);
+    widget->ipcs = uo_ipcs_create(port, msg_widget_handle_cmd);
 
 }
 
