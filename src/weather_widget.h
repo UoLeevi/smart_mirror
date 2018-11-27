@@ -17,8 +17,6 @@ extern "C" {
 typedef struct weather_widget {
     SDL_Thread *thrd;
     char *place;
-    int x, y;
-    render_instr_dest_origin dest_origin;
     bool is_ready;
     bool is_close_requested;
     struct {
@@ -34,9 +32,7 @@ bool weather_widget_init(
 
 weather_widget *weather_widget_create(
     char *place,
-    int x, 
-    int y,
-    render_instr_dest_origin dest_origin);
+    uo_relpoint reldest);
 
 void weather_widget_destroy(
     weather_widget *widget);

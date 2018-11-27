@@ -63,12 +63,6 @@ static int init_update_msg(
 {
     msg_widget *widget = active_widget = arg;
 
-    int x = widget->x;
-    int y = widget->y;
-    render_instr_query_output_xy(renderer, widget->dest_origin, &x, &y);
-    widget->render_instrs.msg.dest_origin = MIDDLE_CENTER;
-    render_instr_set_xy(&widget->render_instrs.msg, x, y);
-
     uo_conf *conf = widget->conf = uo_conf_create("msg_widget.conf");
 
     char *port = uo_conf_get(conf, "port");
@@ -109,14 +103,10 @@ bool msg_widget_init(
 }
 
 msg_widget *msg_widget_create(
-    int x, 
-    int y,
-    render_instr_dest_origin dest_origin)
+    uo_relpoint reldest)
 {
     msg_widget *widget = calloc(1, sizeof(msg_widget));
-    widget->x = x;
-    widget->y = y;
-    widget->dest_origin = dest_origin;
+    render_instr_set_xy(&widget->render_instrs.msg, reldest);
     widget->thrd = SDL_CreateThread(init_update_msg, "msg_widget_thread", widget);
 
     return widget;
@@ -145,11 +135,8 @@ bool msg_widget_render(
 }
 
 bool msg_widget_update_dest(
-    msg_widget *widget) 
+    msg_widget *widget)
 {
-    int x = widget->x;
-    int y = widget->y;
-    render_instr_query_output_xy(renderer, widget->dest_origin, &x, &y);
-    render_instr_set_xy(&widget->render_instrs.msg, x, y);
+    render_instr_reposition(&widget->render_instrs.msg);
     render_instr_update(&widget->render_instrs.msg);
 }

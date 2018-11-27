@@ -25,16 +25,6 @@ static int update_time(
     char wday_buf[0x10];
     char time_buf[0x8];
 
-    int x = widget->x;
-    int y = widget->y;
-    render_instr_query_output_xy(renderer, widget->dest_origin, &x, &y);
-    widget->render_instrs.date.dest_origin = MIDDLE_RIGHT;
-    widget->render_instrs.wday.dest_origin = MIDDLE_RIGHT;
-    widget->render_instrs.time.dest_origin = MIDDLE_RIGHT;
-    render_instr_set_xy(&widget->render_instrs.date, x + 96, y + 92);
-    render_instr_set_xy(&widget->render_instrs.wday, x + 96, y + 52);
-    render_instr_set_xy(&widget->render_instrs.time, x + 96, y);
-
     while (!widget->is_close_requested) 
     {
         time_t t = time(NULL);
@@ -98,14 +88,18 @@ bool time_widget_init(
 }
 
 time_widget *time_widget_create(
-    int x, 
-    int y,
-    render_instr_dest_origin dest_origin)
+    uo_relpoint reldest)
 {
     time_widget *widget = calloc(1, sizeof(time_widget));
-    widget->x = x;
-    widget->y = y;
-    widget->dest_origin = dest_origin;
+
+    render_instr_set_xy(&widget->render_instrs.time, reldest);
+
+    reldest.y.px += 82;
+    render_instr_set_xy(&widget->render_instrs.wday, reldest);
+
+    reldest.y.px += 40;
+    render_instr_set_xy(&widget->render_instrs.date, reldest);
+
     widget->thrd = SDL_CreateThread(update_time, "time_widget_thrd", widget);
 
     return widget;
@@ -140,13 +134,10 @@ bool time_widget_render(
 bool time_widget_update_dest(
     time_widget *widget) 
 {
-    int x = widget->x;
-    int y = widget->y;
-    render_instr_query_output_xy(renderer, widget->dest_origin, &x, &y);
-    render_instr_set_xy(&widget->render_instrs.date, x + 96, y + 92);
-    render_instr_set_xy(&widget->render_instrs.wday, x + 96, y + 52);
-    render_instr_set_xy(&widget->render_instrs.time, x + 96, y);
+    render_instr_reposition(&widget->render_instrs.date);
     render_instr_update(&widget->render_instrs.date);
+    render_instr_reposition(&widget->render_instrs.wday);
     render_instr_update(&widget->render_instrs.wday);
+    render_instr_reposition(&widget->render_instrs.time);
     render_instr_update(&widget->render_instrs.time);
 }

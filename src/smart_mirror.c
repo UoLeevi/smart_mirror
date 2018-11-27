@@ -89,19 +89,13 @@ int main(int argc, char **argv) {
 
 	weather_widget *weather_w = weather_widget_create(
 		conf->weather_widget_conf.place, 
-		conf->weather_widget_conf.x, 
-		conf->weather_widget_conf.y,
-		conf->weather_widget_conf.dest_origin);
+		conf->weather_widget_conf.reldest);
 
 	time_widget *time_w = time_widget_create(
-		conf->time_widget_conf.x, 
-		conf->time_widget_conf.y,
-		conf->time_widget_conf.dest_origin);
+		conf->time_widget_conf.reldest);
 
 	msg_widget *msg_w = msg_widget_create(
-		conf->msg_widget_conf.x, 
-		conf->msg_widget_conf.y,
-		conf->msg_widget_conf.dest_origin);
+		conf->msg_widget_conf.reldest);
 
 	while (!is_close_requested) 
 	{

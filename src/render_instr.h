@@ -11,50 +11,29 @@ extern "C" {
 #include <stdint.h>
 #include <string.h>
 
-#define RENDER_INSTR_DEST_ORIGIN_FROM_STR(dest_origin, str) { \
-    char *s = str; \
-    switch (s[0]) \
-    { \
-        case 'T': \
-            switch (s[4]) \
-            { \
-                case 'L': dest_origin = TOP_LEFT; break; \
-                case 'C': dest_origin = TOP_CENTER; break; \
-                case 'R': dest_origin = TOP_RIGHT; break; \
-            } \
-            break; \
-    \
-        case 'M': \
-            switch (s[7]) \
-            { \
-                case 'L': dest_origin = MIDDLE_LEFT; break; \
-                case 'C': dest_origin = MIDDLE_CENTER; break; \
-                case 'R': dest_origin = MIDDLE_RIGHT; break; \
-            } \
-            break; \
-    \
-        case 'B': \
-            switch (s[7]) \
-            { \
-                case 'L': dest_origin = BOTTOM_LEFT; break; \
-                case 'C': dest_origin = BOTTOM_CENTER; break; \
-                case 'R': dest_origin = BOTTOM_RIGHT; break; \
-            } \
-            break;\
-    } \
-}
-
-typedef enum render_instr_dest_origin {
-    TOP_LEFT,       TOP_CENTER,     TOP_RIGHT,
-    MIDDLE_LEFT,    MIDDLE_CENTER,  MIDDLE_RIGHT,
-    BOTTOM_LEFT,    BOTTOM_CENTER,  BOTTOM_RIGHT
-} render_instr_dest_origin;
+typedef struct uo_relpoint 
+{
+    struct
+    {
+        int16_t px;
+        int16_t pct_screen;
+        int16_t pct_self;
+    } x;
+    struct
+    {
+        int16_t px;
+        int16_t pct_screen;
+        int16_t pct_self;
+    } y;
+} uo_relpoint;
 
 typedef struct render_instr {
     SDL_Texture *texture;
-    SDL_Rect dest[2];
+    SDL_Rect dest;
     SDL_Surface *surface;
-    render_instr_dest_origin dest_origin;
+    uo_relpoint reldest;
+    int w;
+    int h;
     uint8_t alpha;
     uint8_t flags;
     /* flags:
@@ -66,34 +45,37 @@ typedef struct render_instr {
     */
 } render_instr;
 
-bool render_instr_query_output_xy(
-    SDL_Renderer *renderer,
-    render_instr_dest_origin dest_origin,
-    int *x,
-    int *y);
+void render_instr_set(
+    render_instr *instr,
+    SDL_Surface *surface,
+    uo_relpoint reldest,
+    int w,
+    int h);
 
-bool render_instr_set_s(
+void render_instr_set_s(
     render_instr *instr,
     SDL_Surface *surface);
 
-bool render_instr_set_swh(
+void render_instr_set_swh(
     render_instr *instr,
     SDL_Surface *surface,
     int w,
     int h);
 
+void render_instr_set_xy(
+    render_instr *instr,
+    uo_relpoint reldest);
+
 bool render_instr_is_render_required(
     render_instr *instr);
 
-bool render_instr_set_xy(
-    render_instr *instr,
-    int x,
-    int y);
-
-bool render_instr_update(
+void render_instr_reposition(
     render_instr *instr);
 
-bool render_instr_render(
+void render_instr_update(
+    render_instr *instr);
+
+void render_instr_render(
     render_instr *instr,
     SDL_Renderer *renderer); 
 

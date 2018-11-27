@@ -170,29 +170,6 @@ static int update_weather(
 
     uo_ipcc *ipcc = uo_ipcc_create("localhost", "12001");
 
-    int x = widget->x;
-    int y = widget->y;
-    render_instr_query_output_xy(renderer, widget->dest_origin, &x, &y);
-
-    widget->render_instrs[0].celsius.dest_origin = MIDDLE_LEFT;
-    widget->render_instrs[0].symbol.dest_origin = MIDDLE_RIGHT;
-    render_instr_set_xy(&widget->render_instrs[0].celsius, x + 36, y);
-    render_instr_set_xy(&widget->render_instrs[0].symbol,  x + 20, y);
-
-    for (size_t i = 1; i < sizeof widget->render_instrs / sizeof widget->render_instrs[0]; ++i)
-    {
-        uint8_t alpha = (255 * (sizeof widget->render_instrs / sizeof widget->render_instrs[0])) * i;
-        widget->render_instrs[i].celsius.dest_origin = MIDDLE_LEFT;
-        widget->render_instrs[i].symbol.dest_origin = MIDDLE_CENTER;
-        widget->render_instrs[i].time.dest_origin = MIDDLE_RIGHT;
-        widget->render_instrs[i].celsius.alpha = alpha;
-        widget->render_instrs[i].symbol.alpha = alpha;
-        widget->render_instrs[i].time.alpha = alpha;
-        render_instr_set_xy(&widget->render_instrs[i].celsius, x + 32, y + i * 48 + 28);
-        render_instr_set_xy(&widget->render_instrs[i].symbol,  x - 16, y + i * 48 + 28);
-        render_instr_set_xy(&widget->render_instrs[i].time,    x - 64, y + i * 48 + 28);
-    }
-
     char buf[0x100] = { 0 };
     uo_ipcmsg msg = { 0 };
 
@@ -452,17 +429,48 @@ bool weather_widget_init(
 
 weather_widget *weather_widget_create(
     char *place,
-    int x, 
-    int y,
-    render_instr_dest_origin dest_origin)
+    uo_relpoint reldest)
 {
     weather_widget *widget = calloc(1, sizeof(weather_widget));
     size_t place_len = strlen(place);
     widget->place = malloc(place_len + 1);
 	memcpy(widget->place, place, place_len + 1);
-    widget->x = x;
-    widget->y = y;
-    widget->dest_origin = dest_origin;
+
+    uo_relpoint reldest_celsius = reldest;
+    reldest_celsius.x.pct_self += 100;
+    reldest_celsius.x.px += 20;
+
+    uo_relpoint reldest_symbol = reldest;
+    reldest_symbol.x.pct_self -= 12;
+    reldest_symbol.y.pct_self -= 12;
+
+    uo_relpoint reldest_time = reldest;
+    reldest_time.x.pct_self = -100;
+    reldest_time.x.px += 48;
+    reldest_time.y.px += 56;
+
+    render_instr_set_xy(&widget->render_instrs[0].celsius, reldest_celsius);
+    render_instr_set_xy(&widget->render_instrs[0].symbol,  reldest_symbol);
+
+    reldest_symbol.x.px += 68;
+    reldest_symbol.y.px += 56;
+
+    reldest_celsius.x.px += 72;
+    reldest_celsius.y.px += 56;
+
+    for (size_t i = 1; i < sizeof widget->render_instrs / sizeof widget->render_instrs[0]; ++i)
+    {
+        reldest_celsius.y.px += 48;
+        reldest_symbol.y.px += 48;
+        reldest_time.y.px += 48;
+        uint8_t alpha = (255 * (sizeof widget->render_instrs / sizeof widget->render_instrs[0])) * i;
+        widget->render_instrs[i].celsius.alpha = alpha;
+        widget->render_instrs[i].symbol.alpha = alpha;
+        widget->render_instrs[i].time.alpha = alpha;
+        render_instr_set_xy(&widget->render_instrs[i].celsius, reldest_celsius);
+        render_instr_set_xy(&widget->render_instrs[i].symbol,  reldest_symbol);
+        render_instr_set_xy(&widget->render_instrs[i].time,    reldest_time);
+    }
 
     widget->thrd = SDL_CreateThread(update_weather, "weather_widget_thrd", widget);
 
@@ -510,20 +518,17 @@ bool weather_widget_render(
 bool weather_widget_update_dest(
     weather_widget *widget) 
 {
-    int x = widget->x;
-    int y = widget->y;
-    render_instr_query_output_xy(renderer, widget->dest_origin, &x, &y);
-    render_instr_set_xy(&widget->render_instrs[0].celsius, x + 36, y);
-    render_instr_set_xy(&widget->render_instrs[0].symbol,  x + 20, y);
+    render_instr_reposition(&widget->render_instrs[0].celsius);
     render_instr_update(&widget->render_instrs[0].celsius);
+    render_instr_reposition(&widget->render_instrs[0].symbol);
     render_instr_update(&widget->render_instrs[0].symbol);
     for (size_t i = 1; i < sizeof widget->render_instrs / sizeof widget->render_instrs[0]; ++i)
     {
-        render_instr_set_xy(&widget->render_instrs[i].celsius, x + 32, y + i * 48 + 28);
-        render_instr_set_xy(&widget->render_instrs[i].symbol,  x - 16, y + i * 48 + 28);
-        render_instr_set_xy(&widget->render_instrs[i].time,    x - 64, y + i * 48 + 28);
+        render_instr_reposition(&widget->render_instrs[i].celsius);
         render_instr_update(&widget->render_instrs[i].celsius);
+        render_instr_reposition(&widget->render_instrs[i].symbol);
         render_instr_update(&widget->render_instrs[i].symbol);
+        render_instr_reposition(&widget->render_instrs[i].time);
         render_instr_update(&widget->render_instrs[i].time);
     }
 }

@@ -18,8 +18,6 @@ typedef struct msg_widget
     SDL_Thread *thrd;
     void *conf;
     void *ipcs;
-    int x, y;
-    render_instr_dest_origin dest_origin;
     bool is_ready;
     bool is_close_requested;
     struct {
@@ -31,9 +29,7 @@ bool msg_widget_init(
     SDL_Renderer *renderer);
 
 msg_widget *msg_widget_create(
-    int x, 
-    int y,
-    render_instr_dest_origin dest_origin);
+    uo_relpoint reldest);
 
 void msg_widget_destroy(
     msg_widget *widget);

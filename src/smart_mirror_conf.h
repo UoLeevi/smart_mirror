@@ -15,17 +15,14 @@ extern "C" {
 
 typedef struct smart_mirror_conf_t {
 	struct {
-		int x, y;
-		render_instr_dest_origin dest_origin;
+		uo_relpoint reldest;
 		char *place;
 	} weather_widget_conf;
 	struct {
-		int x, y;
-		render_instr_dest_origin dest_origin;
+		uo_relpoint reldest;
 	} time_widget_conf;
 	struct {
-		int x, y;
-		render_instr_dest_origin dest_origin;
+		uo_relpoint reldest;
 	} msg_widget_conf;
 } smart_mirror_conf_t;
 

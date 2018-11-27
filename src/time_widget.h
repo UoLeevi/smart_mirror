@@ -16,8 +16,6 @@ extern "C" {
 
 typedef struct time_widget {
     SDL_Thread *thrd;
-    int x, y;
-    render_instr_dest_origin dest_origin;
     bool is_ready;
     bool is_close_requested;
     struct {
@@ -31,9 +29,7 @@ bool time_widget_init(
     SDL_Renderer *renderer);
 
 time_widget *time_widget_create(
-    int x, 
-    int y,
-    render_instr_dest_origin dest_origin);
+    uo_relpoint reldest);
 
 void time_widget_destroy(
     time_widget *widget);
