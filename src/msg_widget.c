@@ -22,18 +22,17 @@ static TTF_Font *fontXL, *fontL, *fontM, *fontS;
 
 static msg_widget *active_widget;
 
-static void *msg_widget_handle_cmd(
-    uo_ipcmsg *cmd,
+static void *msg_widget_handle_msg(
+    uo_ipcmsg ipcmsg,
     uo_cb *uo_ipcmsg_cb)
 {    
-    bool has_msg = cmd->data && cmd->data_len;
-
-    if (has_msg)
+    if (ipcmsg)
     {
+        char *payload = uo_ipcmsg_get_payload(ipcmsg);
         int w, h;
 
-        SDL_Surface *surface_msg = TTF_RenderUTF8_Blended(fontM, cmd->data, white);
-        TTF_SizeUTF8(fontM, cmd->data, &w, &h);
+        SDL_Surface *surface_msg = TTF_RenderUTF8_Blended(fontM, payload, white);
+        TTF_SizeUTF8(fontM, payload, &w, &h);
         render_instr_set_swh(&active_widget->render_instrs.msg, surface_msg, w, h);
 
         render_instr_update(&active_widget->render_instrs.msg);
@@ -43,7 +42,7 @@ static void *msg_widget_handle_cmd(
 
     uo_cb_invoke_async(uo_ipcmsg_cb, NULL, NULL);
 
-    if (has_msg)
+    if (ipcmsg)
     {
         SDL_Delay(3000);
 
@@ -56,6 +55,8 @@ static void *msg_widget_handle_cmd(
 
         active_widget->is_ready = true;
     }
+
+    free(ipcmsg);
 }
 
 static int init_update_msg(
@@ -66,7 +67,7 @@ static int init_update_msg(
     uo_conf *conf = widget->conf = uo_conf_create("msg_widget.conf");
 
     char *port = uo_conf_get(conf, "port");
-    widget->ipcs = uo_ipcs_create(port, msg_widget_handle_cmd);
+    widget->ipcs = uo_ipcs_create(port, msg_widget_handle_msg);
 
 }
 
