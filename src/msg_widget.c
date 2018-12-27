@@ -86,10 +86,10 @@ bool msg_widget_init(
     
     renderer = renderer_;
 
-    fontXL = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 64);
-    fontL  = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 48);
-    fontM  = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 32);
-    fontS  = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 24);
+    fontXL = TTF_OpenFont("assets/fonts/font.ttf", 64);
+    fontL  = TTF_OpenFont("assets/fonts/font.ttf", 48);
+    fontM  = TTF_OpenFont("assets/fonts/font.ttf", 32);
+    fontS  = TTF_OpenFont("assets/fonts/font.ttf", 24);
 
     is_init = true;
 

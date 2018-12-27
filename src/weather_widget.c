@@ -430,10 +430,10 @@ bool weather_widget_init(
 
     renderer = renderer_;
 
-    fontXL  = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 64);
-    fontL   = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 48);
-    fontM   = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 32);
-    fontS   = TTF_OpenFont("assets/fonts/OpenSans-Regular.ttf", 24);
+    fontXL  = TTF_OpenFont("assets/fonts/font.ttf", 64);
+    fontL   = TTF_OpenFont("assets/fonts/font.ttf", 48);
+    fontM   = TTF_OpenFont("assets/fonts/font.ttf", 32);
+    fontS   = TTF_OpenFont("assets/fonts/font.ttf", 24);
 
     if (is_init)
         return init_result;
@@ -455,26 +455,25 @@ weather_widget *weather_widget_create(
 	memcpy(widget->place, place, place_len + 1);
 
     uo_relpoint reldest_celsius = reldest;
-    reldest_celsius.x.pct_self += 100;
-    reldest_celsius.x.px += 20;
+    reldest_celsius.x.px += 124;
 
     uo_relpoint reldest_symbol = reldest;
     reldest_symbol.x.pct_self -= 12;
-    reldest_symbol.y.pct_self -= 12;
+    reldest_symbol.y.pct_self -= 20;
 
     uo_relpoint reldest_time = reldest;
     reldest_time.x.pct_self = -100;
     reldest_time.x.px += 48;
-    reldest_time.y.px += 56;
+    reldest_time.y.px += 60;
 
     render_instr_set_xy(&widget->render_instrs[0].celsius, reldest_celsius);
     render_instr_set_xy(&widget->render_instrs[0].symbol,  reldest_symbol);
 
     reldest_symbol.x.px += 68;
-    reldest_symbol.y.px += 56;
+    reldest_symbol.y.px += 60;
 
-    reldest_celsius.x.px += 72;
-    reldest_celsius.y.px += 56;
+    reldest_celsius.x.px += 0;
+    reldest_celsius.y.px += 60;
 
     for (size_t i = 1; i < sizeof widget->render_instrs / sizeof widget->render_instrs[0]; ++i)
     {
