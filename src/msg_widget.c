@@ -22,13 +22,13 @@ static TTF_Font *fontXL, *fontL, *fontM, *fontS;
 
 static msg_widget *active_widget;
 
-static void *msg_widget_handle_msg(
-    uo_ipcmsg ipcmsg,
-    uo_cb *uo_ipcmsg_cb)
+static void msg_widget_handle_msg(
+    uo_buf buf,
+    uo_cb *buf_cb)
 {    
-    if (ipcmsg)
+    if (buf)
     {
-        char *payload = uo_ipcmsg_get_payload(ipcmsg);
+        char *payload = buf;
         int w, h;
 
         SDL_Surface *surface_msg = TTF_RenderUTF8_Blended(fontM, payload, white);
@@ -40,9 +40,9 @@ static void *msg_widget_handle_msg(
         active_widget->is_ready = true;
     }
 
-    uo_cb_invoke_async(uo_ipcmsg_cb, NULL, NULL);
+    uo_cb_invoke_async(buf_cb, NULL, NULL);
 
-    if (ipcmsg)
+    if (buf)
     {
         SDL_Delay(3000);
 
@@ -55,8 +55,6 @@ static void *msg_widget_handle_msg(
 
         active_widget->is_ready = true;
     }
-
-    free(ipcmsg);
 }
 
 static int init_update_msg(
